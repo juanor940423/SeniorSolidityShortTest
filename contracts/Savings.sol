@@ -32,6 +32,11 @@ contract Savings is IBank{
         return balanceUser;
     }
 
+     function InterstAccrued() private view {
+        uint256 blocks =block.number - Account_user[msg.sender].lastInterestBlock;
+        uint256 rate = blocks/100;
+    }
+
 
 
 }
