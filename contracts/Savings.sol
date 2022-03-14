@@ -16,8 +16,21 @@ contract Savings is IBank{
         emit Deposit(msg.sender,amount);
         return true;
     }
-    function withdraw(uint256 amount) external override returns (uint256){}
-    function getBalance() external view override returns (uint256){}
+    function withdraw(uint256 amount) external override returns (uint256){
+        uint256 balanceUser = Account_user[msg.sender].deposit;
+        require(amount >=0,"Debes retirar un monto de valor positivo");
+        require(amount <= balanceUser, "Debes retirar un valor menor a tu balance"); //Validacion del retiro, monto hasta el deposito realizado + intereses
+        if(amount ==0){
+            amount=balanceUser;
+        }
+        Account_user[msg.sender].deposit = balanceUser-amount; //Actualizacion del saldo del usuario
+
+        return balanceUser;
+    }
+    function getBalance() external view override returns (uint256){        
+        uint256 balanceUser = Account_user[msg.sender].deposit;
+        return balanceUser;
+    }
 
 
 
