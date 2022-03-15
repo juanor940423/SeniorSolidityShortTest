@@ -5,6 +5,13 @@ import "./IBank.sol";
 
 contract Savings is IBank{
 
+    address  payable contrato;
+    address owner;
+
+    constructor () {
+        contrato =payable(address(this));
+        owner = msg.sender;
+    }
     
     uint256 public percent = 3; //3%
     uint256 count_blocks = 100; //Total de bloques para interes del 3%
@@ -14,9 +21,10 @@ contract Savings is IBank{
     function deposit(uint256 amount) external payable override returns (bool){
         
         require(amount > 0, "Debes depositar un monto mayor a 0");
-        require(msg.value > 0 ether, "Debes depositar un monto mayor a 0");   
-        Account_user[msg.sender]=Account(amount * 1 ether,block.number); //Asignacion a una wallet del monto depositado y el numero del bloque actual
+        require(msg.value > 0 ether, "Debes depositar un monto mayor a 0");     
 
+        Account_user[msg.sender]=Account(amount * 1 ether + Account_user[msg.sender].deposit,block.number); //Asignacion a una wallet del monto depositado y el numero del bloque actual
+        contrato.transfer(amount * 1 ether);
 
         emit Deposit(msg.sender,amount);
         return true;
@@ -29,7 +37,9 @@ contract Savings is IBank{
             amount=balanceUser;
         }
         Account_user[msg.sender].deposit = balanceUser-amount; //Actualizacion del saldo del usuario
+        payable(msg.sender).transfer(amount * 1 ether);
 
+        emit Withdraw(msg.sender, amount);
         return balanceUser;
     }
     function getBalance() external view override returns (uint256){        
@@ -47,7 +57,7 @@ contract Savings is IBank{
 
         
     }
-
+    function AddEth () public payable {}
 
 
 }
