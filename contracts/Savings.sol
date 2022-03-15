@@ -24,7 +24,9 @@ contract Savings is IBank{
         require(msg.value > 0 ether, "Debes depositar un monto mayor a 0");     
 
         Account_user[msg.sender]=Account(amount * 1 ether + Account_user[msg.sender].deposit,block.number); //Asignacion a una wallet del monto depositado y el numero del bloque actual
-        contrato.transfer(amount * 1 ether);
+        payable(contrato).call{value: amount* 1 ether};
+        Account_user[msg.sender].deposit += InterstAccrued(); //Recalculo de deposito mas intereses
+        Account_user[msg.sender].lastInterestBlock = block.number; //actualizacion del bloque
 
         emit Deposit(msg.sender,amount);
         return true;
@@ -33,12 +35,17 @@ contract Savings is IBank{
         uint256 balanceUser = Account_user[msg.sender].deposit;
         require(amount >=0,"Debes retirar un monto de valor positivo");
         require(amount <= balanceUser, "Debes retirar un valor menor a tu balance"); //Validacion del retiro, monto hasta el deposito realizado + intereses
+        
         if(amount ==0){
             amount=balanceUser;
         }
+        
+        Account_user[msg.sender].deposit += InterstAccrued(); //Recalculo de deposito mas intereses
+        require(contrato.balance >= Account_user[msg.sender].deposit); //Balance del contrato mayor o igual al deposito del usuario mas intereses
+        Account_user[msg.sender].lastInterestBlock = block.number; //actualizacion del bloque
         Account_user[msg.sender].deposit = balanceUser-amount; //Actualizacion del saldo del usuario
-        payable(msg.sender).transfer(amount * 1 ether);
-
+        payable(msg.sender).call{value: amount *1 ether};
+        
         emit Withdraw(msg.sender, amount);
         return balanceUser;
     }
@@ -53,11 +60,12 @@ contract Savings is IBank{
         uint256 rate = blocks*(percent*10**16)/count_blocks; //Calculo de la tasa de interes hasta el bloque actual
         uint256 interstTotal = (Account_user[msg.sender].deposit / 1 ether)*rate; //Calculo del total de intereses obtenidos hasta el bloque actual
 
-        return interstTotal;
-
-        
+        return interstTotal;       
     }
-    function AddEth () public payable {}
+
+    function balanceContrato () public view returns(uint256){
+        return contrato.balance;
+    }
 
 
 }
